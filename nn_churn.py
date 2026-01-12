@@ -7,38 +7,31 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-# 1. Load dataset
 df = pd.read_csv("dataset.csv")
 
 # --- Debug raw Churn values ---
 print("Unique values in Churn column (raw):", df["Churn"].unique())
 
-# 2. Clean TotalCharges
 df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
 df["TotalCharges"].fillna(df["TotalCharges"].median(), inplace=True)
 
-# 3. Drop customerID
 if "customerID" in df.columns:
     df = df.drop("customerID", axis=1)
 
-# 4. Encode categorical features
 categorical_cols = df.select_dtypes(include=["object"]).columns.tolist()
 for col in categorical_cols:
     if col != "Churn":  # don't encode target here
         df[col] = LabelEncoder().fit_transform(df[col])
 
-# 5. Normalize and encode target column
 df["Churn"] = df["Churn"].astype(str).str.strip().str.lower()
 print("Unique values after normalization:", df["Churn"].unique())
 
 df["Churn"] = df["Churn"].map({"yes": 1, "no": 0})
 df.dropna(subset=["Churn"], inplace=True)
 
-# --- Debug check ---
 print("Dataset shape after cleaning:", df.shape)
 print("Churn value counts:\n", df["Churn"].value_counts(dropna=False))
 
-# 6. Split dataset
 X = df.drop("Churn", axis=1).values
 y = df["Churn"].values
 
@@ -51,13 +44,11 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-# Convert to PyTorch tensors
 X_train = torch.tensor(X_train, dtype=torch.float32)
 X_test = torch.tensor(X_test, dtype=torch.float32)
 y_train = torch.tensor(y_train, dtype=torch.float32).view(-1, 1)
 y_test = torch.tensor(y_test, dtype=torch.float32).view(-1, 1)
 
-# 7. Define Neural Network
 class ChurnNN(nn.Module):
     def __init__(self, input_dim):
         super(ChurnNN, self).__init__()
@@ -80,7 +71,6 @@ model = ChurnNN(X_train.shape[1])
 criterion = nn.BCELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# 8. Train model
 epochs = 50
 for epoch in range(epochs):
     outputs = model(X_train)
@@ -93,7 +83,6 @@ for epoch in range(epochs):
     if (epoch+1) % 10 == 0:
         print(f"Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}")
 
-# 9. Evaluate model
 with torch.no_grad():
     y_pred = model(X_test)
     y_pred_class = (y_pred >= 0.5).int()
@@ -106,4 +95,5 @@ print("\nNeural Network Results:")
 print("Accuracy:", accuracy_score(y_true, y_pred_class))
 print("Precision:", precision_score(y_true, y_pred_class))
 print("Recall:", recall_score(y_true, y_pred_class))
+
 print("F1 Score:", f1_score(y_true, y_pred_class))
