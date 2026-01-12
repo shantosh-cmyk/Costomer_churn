@@ -10,7 +10,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-# 1. Load dataset
 df = pd.read_csv("dataset.csv")
 
 # Clean TotalCharges
@@ -48,7 +47,6 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-# --- Classical Models ---
 log_reg = LogisticRegression(max_iter=1000)
 log_reg.fit(X_train, y_train)
 y_pred_lr = log_reg.predict(X_test)
@@ -61,7 +59,6 @@ svm = SVC(class_weight="balanced", kernel="rbf")
 svm.fit(X_train, y_train)
 y_pred_svm = svm.predict(X_test)
 
-# --- Neural Network ---
 X_train_t = torch.tensor(X_train, dtype=torch.float32)
 X_test_t = torch.tensor(X_test, dtype=torch.float32)
 y_train_t = torch.tensor(y_train, dtype=torch.float32).view(-1, 1)
@@ -97,7 +94,6 @@ with torch.no_grad():
     y_pred_nn = model(X_test_t)
     y_pred_nn_class = (y_pred_nn >= 0.5).int().numpy().flatten()
 
-# --- Collect Metrics ---
 results = {
     "Logistic Regression": [
         accuracy_score(y_test, y_pred_lr),
@@ -125,7 +121,7 @@ results = {
     ]
 }
 
-# Display results as table
 df_results = pd.DataFrame(results, index=["Accuracy", "Precision", "Recall", "F1 Score"])
 print("\nModel Comparison:\n")
+
 print(df_results.T)
